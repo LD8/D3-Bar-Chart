@@ -1,0 +1,145 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.2/d3.min.js"></script>
+    <title>Document</title>
+</head>
+
+<body>
+
+    <h1 id="title">GDP of USA 1947 - 2015</h1>
+    <section></section>
+
+    <script>
+
+        // let testingData = [];
+        // req = new XMLHttpRequest();
+        // req.open("GET", 'https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/GDP-data.json', true);
+        // req.send();
+        // req.onload = function () {
+        //     json = JSON.parse(req.responseText);
+        //     var html = "";
+        //     html += "<div class = 'cat'>";
+        //     json.data.forEach(function (arr) {
+        //         testingData.push([arr[0], arr[1]]);
+        //         html += "<strong>" + arr[0] + "</strong>: " + arr[1] + ":" + arr[0].substring(1, 4)
+        //             + "<br>";
+        //     });
+        // }
+        // console.log(testingData);
+        d3.json('https://raw.githubusercontent.com/FreeCodeCamp/ProjectReferenceData/master/GDP-data.json', function (err, data) {
+            const dataset = data.data;
+            const w = 900;
+            const h = 500;
+            const p = 50;
+            const barWidth = ((w - (2 * p)) / 275);
+
+            const tooltip = d3.select('section')
+                .append('div')
+                .attr('id', 'tooltip')
+                .style('opacity', 0);
+
+            const svg = d3.select('section')
+                .append('svg')
+                .attr('width', w)
+                .attr('height', h)
+                .style('fill', 'darkgrey');
+
+            const date = dataset.map(d => new Date(d[0]))
+            const minYear = d3.min(date);
+            const maxYear = d3.max(date);
+            //console.log(minYear, maxYear);
+            const xScale = d3.scaleTime()
+                .domain([minYear, maxYear.setMonth(maxYear.getMonth() + 3)]) //tricky part??
+                .range([p, w - p]);
+
+            const yScale = d3.scaleLinear()
+                .domain([0, d3.max(dataset, d => d[1])])
+                .range([p, h - p]);
+
+
+            svg.selectAll('rect')
+                .data(dataset)
+                .enter()
+                .append('rect')
+                .attr('data-date', d => d[0])
+                .attr('data-gdp', d => d[1])
+                .attr('class', 'bar')
+                .attr('x', (d, i) => i * barWidth + p)
+                .attr('y', (d, i) => h - yScale(d[1])) //have to think this over!!??
+                .attr('width', barWidth - 1)
+                .attr('height', d => yScale(d[1]) - p) //have to think this over!!
+                .on('mouseover', d => {
+                    tooltip.style('opacity', .9);
+                    tooltip.attr('data-date', d[0]);
+                    tooltip.html('Date: ' + d[0])
+                        .style('left', d3.event.pageX + 'px')
+                        .style('top', d3.event.pageY - 28 + 'px')
+                })
+                .on('mouseout', () => {
+                    tooltip.style('opacity', 0)
+                })
+
+
+            //axes below:
+            const xAxisScale = d3.scaleTime()
+                .domain([minYear, maxYear])
+                .range([p, w - p]);
+
+            const yAxisScale = d3.scaleLinear()
+                .domain([0, d3.max(dataset, d => d[1])])
+                .range([h - p, p])
+
+            const xAxis = d3.axisBottom(xAxisScale);
+            const yAxis = d3.axisLeft(yAxisScale);
+
+            svg.append('g')
+                .attr('id', 'x-axis')
+                .attr('transform', 'translate(0,' + (h - p) + ')') //not sure why??
+                .call(xAxis);
+
+            svg.append('g')
+                .attr('id', 'y-axis')
+                .attr('transform', 'translate(' + (p) + ',0)')
+                .call(yAxis);
+
+        });
+
+    </script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        svg {
+            background-color: rgb(230, 255, 252);
+        }
+
+        .bar:hover {
+            fill: orange;
+        }
+
+        #tooltip {
+            background-color: lightblue;
+            position: absolute;
+            opacity: 0;
+            color: #191919;
+            font-size: 20px;
+            padding: 5px;
+            pointer-events: none;
+            border: 2px solid #8f8779;
+            border-radius: 3px;
+        }
+    </style>
+
+    <script src="https://cdn.freecodecamp.org/testable-projects-fcc/v1/bundle.js"></script>
+</body>
+
+</html>
